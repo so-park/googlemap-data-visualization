@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="map.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+    crossorigin="anonymous">
+</head>
+
+<body>
+  <div class="container">
+    <h1><strong>Rape Kit Data Backlog</strong></h1>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-md-9">
+        <div id="map-container" class="z-depth-1">
+
+          <div id="map"></div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <!-- <button  type="button" class="btn btn-light" onclick="showlegend()" >Show Legend</button>
+      -->
+        <!-- Search bar  -->
+        <!-- <div class="card">
+        <input class="search" type="text" placeholder="Search..">
+      </div> -->
+        <br>
+        <div class="card">
+          <div class="card-body">
+            <h3>Legend</h3>
+            <p>
+              </br> 300+ unprocessed kits
+              <span class="box one"></span>
+              </br> 200+ unprocessed kits
+              <span class="box two"></span>
+              </br> 100+ unprocessed kits
+              <span class="box three"></span>
+              </br> 10+ unprocessed kits
+              <span class="box four"></span>
+              </br> 0-10 unprocessed kits
+              <span class="box five"></span>
+            </p>
+          </div>
+        </div>
+        <br>
+
+        <div class="card">
+          <div class="card-body">
+            <p id="info">
+              Information.
+
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var map;
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 8,
+        center: { lat: 47.608013, lng: -121.335167 },
+        mapTypeId: 'roadmap'
+      });
+
+      var script = document.createElement('script');
+      script.src = 'backlogData.geojson';
+      document.getElementsByTagName('head')[0].appendChild(script);
+
+
+    }
+
+    window.callback = function (results) {
+      for (var i = 0; i < results.features.length; i++) {
+
+        var coords = results.features[i].properties.coordinates;
+        var backlog = results.features[i].properties.backlog;
+        if (backlog == null) {
+          backlog = 0;
+        }
+        var latLng = new google.maps.LatLng(coords[0], coords[1]);
+        var contentString = results.features[i].properties.dept + "\n";
+
+        var marker = new google.maps.Marker({
+          position: latLng,
+          map: map,
+          icon: getCircle(backlog),
+          label: {
+            text: backlog.toString(),
+            fontFamily: 'sans-serif',
+            fontSize: '10px'
+          }
+        })
+
+        var infowindow = new google.maps.InfoWindow();
+        google.maps.event.addListener(marker, 'click', (function (marker, contentString, backlog, coords) {
+          return function () {
+            infowindow.setContent(contentString);
+            infowindow.open(map, marker);
+
+            document.getElementById("info").innerHTML = contentString + "<br>"+
+              " Number of backlogs: " + backlog +
+              "<br>"+"Coordinates: " + coords;
+          }
+        })(marker, contentString, backlog, coords))
+
+        google.maps.event.addListener(marker, 'click', function () {
+          map.panTo(this.getPosition());
+          smoothZoom(map, 10, map.getZoom());
+        });
+        google.maps.event.addListener(marker, 'dblclick', function (event) {
+          map = marker.getMap();
+          map.setCenter(marker.getPosition()); // set map center to marker position
+          smoothZoom(map, 12, map.getZoom()); // call smoothZoom, parameters map, final zoomLevel, and starting zoom level
+        })
+
+
+        // the smooth zoom function
+        function smoothZoom(map, max, cnt) {
+          if (cnt >= max) {
+            return;
+          }
+          else {
+            y = google.maps.event.addListener(map, 'zoom_changed', function (event) {
+              google.maps.event.removeListener(y);
+              smoothZoom(map, max, cnt + 1);
+            });
+            setTimeout(function () { map.setZoom(cnt) }, 80);
+          }
+        }
+      }
+    }
+
+    function getCircle(backlog) {
+      var color;
+      backlog > 300 ? color = '#4c0909' :
+        backlog > 200 ? color = '#a00b0b' :
+          backlog > 100 ? color = '#e53522' :
+            backlog > 10 ? color = '#f75b01' : color = '#f2f701';
+      return {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: color,
+        fillOpacity: 0.8,
+        scale: 15,
+        strokeColor: 'white',
+        strokeWeight: .5,
+        showToolTip: true
+      };
+    }
+  </script>
+
+
+  <script async defer src="YOUR GOOGLE MAP API KEY">
+  </script>
+</body>
+
+</html>
+
+
+<!--reference:
+  file:///C:/Users/webintern1/Desktop/WASPC%20Unsubmitted%20Sexual%20Assault%20Kit%20Survey%20Results%20Summary.pdf -->
